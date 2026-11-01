@@ -30,6 +30,19 @@ Views.calendar = root => {
     }).join('');
     body = `<div class="month"><div class="m-head">${[1, 2, 3, 4, 5, 6, 0].map(d => `<div>${U.DAYS[d]}</div>`).join('')}</div><div class="m-grid">${cells}</div></div>`;
   }
+  // 목표 메모: 오늘은 항상 실제 오늘, 주간 목표는 주 보기에서 보고 있는 주(월 보기에서는 이번 주)
+  const today = new Date();
+  const gw = U.startOfWeek(Cal.mode === 'week' ? a : today);
+  const thisWeek = U.sameDay(gw, U.startOfWeek(today));
+  const goalBox = (label, sub, id, ph) => `<section class="card goal">
+      <h3>${label} <span class="muted small">${sub}</span></h3>
+      <textarea data-goal="${id}" rows="3" placeholder="${ph}" aria-label="${label}">${U.esc(Store.note(id))}</textarea>
+    </section>`;
+  const goals = `<div class="grid-2 goals">
+    ${goalBox('오늘의 목표', U.fmtShort(today), `goal-day-${U.ymd(today)}`, '오늘 꼭 해낼 일을 적어 보세요')}
+    ${goalBox(thisWeek ? '이번 주의 목표' : '그 주의 목표', `${U.fmtShort(gw)} – ${U.fmtShort(U.addDays(gw, 6))}`, `goal-week-${U.ymd(gw)}`, '이번 주에 이루고 싶은 것을 적어 보세요')}
+  </div>`;
+
   root.innerHTML = `
     <header class="page-head">
       <div class="cal-nav">
@@ -44,6 +57,7 @@ Views.calendar = root => {
         <button class="btn primary" data-act="new-event">+ 일정</button>
       </div>
     </header>
+    ${goals}
     <section class="card flush">${body}</section>
     ${Cal.mode === 'week' ? '<p class="hint">빈 칸을 누르면 그 시간에 일정이 만들어져요. 맨 위 줄은 그날 마감되는 과제입니다.</p>' : '<p class="hint">날짜를 누르면 그 주로 이동해요.</p>'}`;
 };

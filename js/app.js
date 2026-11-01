@@ -78,10 +78,16 @@ const App = (() => {
     }
   });
 
+  // 목표 메모: 입력을 멈추면 잠시 뒤, 칸을 벗어나면 바로 저장
+  let goalTimer = null;
+  const saveGoal = el => { clearTimeout(goalTimer); Store.setNote(el.dataset.goal, el.value); };
+
   main.addEventListener('input', e => {
     if (e.target.dataset.filter === 'q') { TaskFilter.q = e.target.value; Views.taskList(main.querySelector('.task-groups')); }
+    if (e.target.dataset.goal) { clearTimeout(goalTimer); goalTimer = setTimeout(() => saveGoal(e.target), 700); }
   });
   main.addEventListener('change', e => {
+    if (e.target.dataset.goal) saveGoal(e.target);
     const f = e.target.dataset.filter, s = e.target.dataset.setting;
     if (f === 'course') { TaskFilter.course = e.target.value; Views.taskList(main.querySelector('.task-groups')); }
     if (f === 'semester') { Store.state.activeSemesterId = e.target.value; Store.commit(); }
@@ -103,7 +109,8 @@ const App = (() => {
     if (e.target.matches('[data-login]')) { e.preventDefault(); Actions['sync-login'](); }
   });
 
-  Store.subscribe(render);
+  // 목표 메모를 쓰는 중에는 화면을 다시 그리지 않는다 (글자가 지워지거나 커서가 튀지 않게)
+  Store.subscribe(() => { if (!document.activeElement?.dataset?.goal) render(); });
   Sync.subscribe(() => {
     renderSyncStatus();
     // 로그인 칸에 입력 중일 때는 화면을 다시 그리지 않는다

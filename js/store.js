@@ -4,7 +4,7 @@ const Store = (() => {
   const KEY = 'daybook.v1';
   const COLORS = ['#5b7bd5', '#d0706a', '#4f9d7e', '#c99a3b', '#8a6cc7', '#3d9bb8', '#c46aa0', '#7a8a52'];
   const TASK_TYPES = ['과제', '퀴즈', '시험', '발표', '팀플', '기타'];
-  const COLS = ['semesters', 'courses', 'exceptions', 'tasks', 'events'];
+  const COLS = ['semesters', 'courses', 'exceptions', 'tasks', 'events', 'notes'];
   const TOMBSTONE_DAYS = 90;
 
   function newSemester() {
@@ -23,7 +23,7 @@ const Store = (() => {
     return {
       version: 1, pristine: true,
       semesters: [sem], activeSemesterId: sem.id,
-      courses: [], exceptions: [], tasks: [], events: [],
+      courses: [], exceptions: [], tasks: [], events: [], notes: [],
       settings: { theme: 'system', dayStart: '09:00', dayEnd: '22:00' },
       settingsAt: 0, deleted: {},
     };
@@ -128,6 +128,13 @@ const Store = (() => {
     },
     remove(col, id) { state[col] = state[col].filter(x => x.id !== id); commit(); },
     find(col, id) { return state[col].find(x => x.id === id); },
+    // 목표 메모: id는 'goal-day-날짜' 또는 'goal-week-그 주 월요일'. 비우면 지운다.
+    note(id) { return state.notes.find(n => n.id === id)?.text || ''; },
+    setNote(id, text) {
+      const cur = state.notes.find(n => n.id === id);
+      if (!text.trim()) { if (cur) this.remove('notes', id); }
+      else if (!cur || cur.text !== text) this.upsert('notes', { id, text });
+    },
     replaceAll(s) {
       const next = migrate(s);
       next.deleted = { ...state.deleted, ...next.deleted };

@@ -236,6 +236,15 @@ input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; m
   .row { flex-wrap: wrap; }
 }
 
+/* 캘린더 목표 메모 */
+.goals { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.goal { display: flex; flex-direction: column; }
+.goal h3 { display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; }
+.goal h3 .small { font-weight: 400; }
+.goal textarea { flex: 1; width: 100%; min-height: 76px; border-color: var(--line); background: var(--bg); line-height: 1.6; }
+.goal textarea:focus { border-color: var(--text); background: var(--surface); }
+@media (max-width: 860px) { .goals { grid-template-columns: minmax(0, 1fr); } }
+
 /* 동기화 상태·로그인 */
 .side-foot { text-decoration: none; }
 .side-foot:hover { color: var(--text); }
