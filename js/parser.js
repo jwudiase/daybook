@@ -61,8 +61,19 @@ const Parser = (() => {
     let title = s.replace(/\s+/g, ' ').trim();
     if (!title && course) title = type || '과제';
 
-    const kind = end ? 'event' : (type || course) ? 'task' : start ? 'event' : 'task';
+    // 시간 범위 → 일정, 과제 종류 단어 → 과제, 나머지 → 할 일
+    const kind = end ? 'event' : type ? 'task' : 'todo';
     return { kind, title, date: date && U.ymd(date), start, end, course, type };
+  }
+
+  // 날짜도 시간도 없으면 기한 없는 할 일
+  function toTodo(p) {
+    const date = p.date || (p.start ? U.ymd(new Date()) : '');
+    return {
+      kind: 'todo', title: p.title || p.course?.name || '새 할 일', courseId: p.course?.id || '', type: '할 일',
+      due: date ? `${date}T${p.start || '23:59'}` : '',
+      priority: 2, status: 'todo', estimate: '', subtasks: [], memo: '', createdAt: Date.now(),
+    };
   }
 
   function toTask(p) {
@@ -83,5 +94,5 @@ const Parser = (() => {
     };
   }
 
-  return { parse, toTask, toEvent };
+  return { parse, toTask, toTodo, toEvent };
 })();

@@ -148,6 +148,13 @@ input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; m
 .tg-now::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
 .due-chip { font-size: 11px; padding: 1px 6px; border-radius: 4px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: color-mix(in srgb, var(--c) 14%, var(--surface)); border-left: 3px solid var(--c); }
 .due-chip.is-done { opacity: .5; text-decoration: line-through; }
+/* 할 일: 동그란 체크와 테두리만 있는 칩으로 과제와 구분 */
+.task-row.is-todo .check { appearance: none; -webkit-appearance: none; width: 17px; height: 17px; border: 1.6px solid var(--line-strong); border-radius: 50%; display: grid; place-content: center; flex: none; }
+.task-row.is-todo .check:checked { background: var(--accent); border-color: var(--accent); }
+.task-row.is-todo .check:checked::after { content: ""; width: 7px; height: 4px; border: 2px solid var(--accent-text); border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); }
+.memo-peek { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
+.due-chip.is-todo { background: transparent; border: 1px dashed var(--c); border-left-width: 1px; border-radius: 999px; }
+.due-chip.is-todo::before { content: "○ "; }
 
 /* 월간 */
 .cal-nav { display: flex; align-items: center; gap: 6px; }
@@ -232,7 +239,7 @@ input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; m
   .quick-btn span:last-child, .side-foot { display: none; }
   .nav { display: flex; gap: 2px; overflow-x: auto; }
   main { padding: 20px 16px 48px; }
-  .grid-2 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: minmax(0, 1fr); }
   .row { flex-wrap: wrap; }
 }
 
@@ -265,7 +272,7 @@ code { font: 12px ui-monospace, Consolas, monospace; background: var(--surface-2
     background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(12px);
   }
   .brand, .quick-btn, .side-foot { display: none; }
-  .nav { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; gap: 0; overflow: visible; }
+  .nav { display: grid; grid-template-columns: repeat(6, 1fr); width: 100%; gap: 0; overflow: visible; }
   .nav a { flex-direction: column; gap: 2px; padding: 6px 0; font-size: 11px; justify-content: center; }
   .nav a.on { background: none; box-shadow: none; }
   .nav svg { width: 22px; height: 22px; }

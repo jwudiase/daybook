@@ -22,7 +22,12 @@ const Modal = {
 
 const UI = {
   HOUR: 44,
-  byDue: (a, b) => a.due.localeCompare(b.due),
+  // 과제와 할 일은 같은 곳(tasks)에 저장하고 kind로 나눈다. kind가 없으면 과제.
+  isTodo: t => t.kind === 'todo',
+  assignments: () => Store.state.tasks.filter(t => t.kind !== 'todo'),
+  todos: () => Store.state.tasks.filter(t => t.kind === 'todo'),
+  // 기한 없는 할 일은 맨 뒤로
+  byDue: (a, b) => (a.due || '9999').localeCompare(b.due || '9999'),
 
   courseTag(c) {
     return c ? `<span class="tag"><i class="dot" style="background:${c.color}"></i>${U.esc(c.name)}</span>` : '';
@@ -30,21 +35,28 @@ const UI = {
 
   ddayBadge(t) {
     if (t.status === 'done') return '<span class="badge">완료</span>';
+    if (!t.due) return '';
     const d = new Date(t.due), n = U.daysUntil(d), over = d < new Date();
     const cls = over ? 'over' : n <= 1 ? 'hot' : n <= 3 ? 'warm' : '';
     return `<span class="badge ${cls}">${over && n === 0 ? '마감 지남' : U.dday(d)}</span>`;
   },
 
   taskRow(t) {
-    const c = Store.course(t.courseId), d = new Date(t.due);
+    const c = Store.course(t.courseId), todo = UI.isTodo(t);
     const subs = t.subtasks?.length ? `<span class="small muted">☑ ${t.subtasks.filter(s => s.done).length}/${t.subtasks.length}</span>` : '';
-    return `<li class="task-row ${t.status === 'done' ? 'is-done' : ''}" data-task="${t.id}">
+    const meta = todo
+      ? `${UI.courseTag(c)}${t.memo ? `<span class="small muted memo-peek">${U.esc(t.memo.split('\n')[0])}</span>` : ''}`
+      : `${UI.courseTag(c)}<span class="tag plain">${U.esc(t.type)}</span>${t.status === 'doing' ? '<span class="tag plain">진행 중</span>' : ''}${subs}`;
+    const due = t.due
+      ? `<span class="small muted">${U.fmtShort(new Date(t.due))} ${t.due.slice(11, 16)}</span>${UI.ddayBadge(t)}`
+      : `<span class="small muted">기한 없음</span>${t.status === 'done' ? UI.ddayBadge(t) : ''}`;
+    return `<li class="task-row ${todo ? 'is-todo' : ''} ${t.status === 'done' ? 'is-done' : ''}" data-task="${t.id}">
       <input type="checkbox" class="check" data-toggle-task="${t.id}" ${t.status === 'done' ? 'checked' : ''} aria-label="완료 표시">
       <div class="task-main">
         <div class="task-title">${t.priority === 3 ? '<span class="prio" title="우선순위 높음">!</span>' : ''}${U.esc(t.title)}</div>
-        <div class="task-meta">${UI.courseTag(c)}<span class="tag plain">${U.esc(t.type)}</span>${t.status === 'doing' ? '<span class="tag plain">진행 중</span>' : ''}${subs}</div>
+        ${meta ? `<div class="task-meta">${meta}</div>` : ''}
       </div>
-      <div class="task-due"><span class="small muted">${U.fmtShort(d)} ${t.due.slice(11, 16)}</span>${UI.ddayBadge(t)}</div>
+      <div class="task-due">${due}</div>
     </li>`;
   },
 
@@ -55,7 +67,7 @@ const UI = {
 
   dueChip(t) {
     const c = Store.course(t.courseId);
-    return `<div class="due-chip ${t.status === 'done' ? 'is-done' : ''}" data-task="${t.id}" style="--c:${c?.color || 'var(--muted)'}" title="${U.esc(t.title)}">${t.due.slice(11, 16)} ${U.esc(t.title)}</div>`;
+    return `<div class="due-chip ${UI.isTodo(t) ? 'is-todo' : ''} ${t.status === 'done' ? 'is-done' : ''}" data-task="${t.id}" style="--c:${c?.color || 'var(--muted)'}" title="${U.esc(t.title)}">${t.due.slice(11, 16)} ${U.esc(t.title)}</div>`;
   },
 
   empty(msg, action = '') { return `<div class="empty"><p>${msg}</p>${action}</div>`; },

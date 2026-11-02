@@ -1,13 +1,21 @@
-// 오늘: 오늘 수업·일정, 마감, 비는 시간
+// 오늘: 오늘 수업·일정, 과제 마감, 할 일, 비는 시간
 Views.today = root => {
   const now = new Date(), nm = U.nowMin(), sem = Store.semester();
   const items = Sched.itemsOn(now);
-  const open = Store.state.tasks.filter(t => t.status !== 'done').sort(UI.byDue);
   const n = t => U.daysUntil(new Date(t.due));
-  const over = open.filter(t => new Date(t.due) < now);
-  const today = open.filter(t => new Date(t.due) >= now && n(t) === 0);
-  const week = open.filter(t => n(t) >= 1 && n(t) <= 7);
-  const later = open.filter(t => n(t) > 7).length;
+  // 마감 지남 / 오늘 / 7일 이내 / 그 이후(개수)로 나누기
+  const split = list => {
+    const dated = list.filter(t => t.due);
+    return {
+      over: dated.filter(t => new Date(t.due) < now),
+      today: dated.filter(t => new Date(t.due) >= now && n(t) === 0),
+      week: dated.filter(t => n(t) >= 1 && n(t) <= 7),
+      later: dated.filter(t => n(t) > 7).length,
+      none: list.filter(t => !t.due),
+    };
+  };
+  const { over, today, week, later } = split(UI.assignments().filter(t => t.status !== 'done').sort(UI.byDue));
+  const td = split(UI.todos().filter(t => t.status !== 'done').sort(UI.byDue));
   const free = Sched.freeSlots(now, 30);
   const weekNo = Sched.inSemester(now)
     ? Math.round((U.startOfWeek(now) - U.startOfWeek(U.parseYmd(sem.start))) / (7 * 86400000)) + 1 : null;
@@ -24,6 +32,7 @@ Views.today = root => {
   }).join('')}</ul>` : UI.empty('오늘은 수업도 일정도 없어요.');
 
   const dues = UI.group('마감 지남', over, 'over') + UI.group('오늘 마감', today) + UI.group('7일 이내', week);
+  const todos = UI.group('기한 지남', td.over, 'over') + UI.group('오늘까지', td.today) + UI.group('7일 이내', td.week) + UI.group('기한 없음', td.none);
   const freeHtml = free.length
     ? `<div class="chips">${free.map(([s, e]) => `<button class="chip" data-act="free-today" data-s="${s}" data-e="${e}">${U.fromMin(s)}–${U.fromMin(e)} <span class="muted">${U.fmtDur(e - s)}</span></button>`).join('')}</div>`
     : '<p class="muted small">오늘 남은 빈 시간이 없어요.</p>';
@@ -33,6 +42,7 @@ Views.today = root => {
       <div><p class="eyebrow">${U.esc(sem.name)}${weekNo ? ` · ${weekNo}주차` : ''}</p><h1>${U.fmtDate(now)}</h1></div>
       <div class="head-actions">
         <button class="btn" data-act="new-event">+ 일정</button>
+        <button class="btn" data-act="new-todo">+ 할 일</button>
         <button class="btn primary" data-act="new-task">+ 과제</button>
       </div>
     </header>
@@ -47,7 +57,12 @@ Views.today = root => {
       <section class="card"><h3>마감</h3>${dues || UI.empty('7일 안에 마감되는 과제가 없어요.')}
         ${later ? `<a class="more-link" href="#tasks">그 이후 ${later}개 더 보기 →</a>` : ''}</section>
     </div>
-    <section class="card"><h3>오늘 비는 시간</h3>${freeHtml}</section>`;
+    <div class="grid-2">
+      <section class="card"><h3>오늘 비는 시간</h3>${freeHtml}</section>
+      <section class="card"><div class="card-head"><h3>할 일</h3><button class="btn small" data-act="new-todo">+ 할 일</button></div>
+        ${todos || UI.empty('남은 할 일이 없어요.')}
+        ${td.later ? `<a class="more-link" href="#todos">그 이후 ${td.later}개 더 보기 →</a>` : ''}</section>
+    </div>`;
 };
 
 Actions['free-today'] = el => {

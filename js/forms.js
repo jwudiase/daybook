@@ -10,7 +10,44 @@ const Forms = (() => {
     <button type="button" class="btn" data-close>취소</button><button type="submit" class="btn primary">${primary}</button></footer>`;
   const delBtn = '<button type="button" class="btn danger-text" data-del>삭제</button>';
 
+  // 할 일: 과제보다 단순한 입력 (기한은 선택)
+  function todo(input = {}) {
+    const isNew = !input.id;
+    const t = {
+      id: U.uid(), kind: 'todo', title: '', courseId: '', type: '할 일', due: '',
+      priority: 2, status: 'todo', estimate: '', subtasks: [], memo: '', createdAt: Date.now(), ...structuredClone(input),
+    };
+    const el = Modal.open(isNew ? '새 할 일' : '할 일 편집', `<form class="form">
+      <label class="field"><span>할 일</span><input name="title" required value="${U.esc(t.title)}" placeholder="예) 출석 체크 안 된 부분 교수님께 연락하기"></label>
+      <div class="row">
+        <label class="field"><span>기한 (없으면 비워 두기)</span><input type="date" name="dueDate" value="${t.due.slice(0, 10)}"></label>
+        <label class="field"><span>시간</span><input type="time" name="dueTime" value="${t.due.slice(11, 16)}"></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>관련 과목</span><select name="courseId">${courseOpts(t.courseId)}</select></label>
+        <label class="field"><span>우선순위</span><select name="priority">${opts([[1, '낮음'], [2, '보통'], [3, '높음']], t.priority)}</select></label>
+      </div>
+      <label class="field"><span>메모</span><textarea name="memo" rows="3" placeholder="연락처, 필요한 서류 등">${U.esc(t.memo)}</textarea></label>
+      ${foot(isNew ? '' : delBtn)}
+    </form>`);
+    const form = el.querySelector('form');
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const f = new FormData(form), date = f.get('dueDate'), time = f.get('dueTime');
+      if (!date && time) { alert('시간을 정하려면 기한 날짜도 골라 주세요.'); return; }
+      Store.upsert('tasks', {
+        ...t, title: f.get('title').trim(), courseId: f.get('courseId'), priority: +f.get('priority'),
+        due: date ? `${date}T${time || '23:59'}` : '', memo: f.get('memo'),
+      });
+      Modal.close();
+    });
+    el.querySelector('[data-del]')?.addEventListener('click', () => {
+      if (confirm('이 할 일을 삭제할까요?')) { Store.remove('tasks', t.id); Modal.close(); }
+    });
+  }
+
   function task(input = {}) {
+    if (input.kind === 'todo') return todo(input);
     const isNew = !input.id;
     const t = {
       id: U.uid(), title: '', courseId: '', type: '과제', due: U.ymd(U.addDays(new Date(), 7)) + 'T23:59',
@@ -276,10 +313,10 @@ const Forms = (() => {
 
   function quickAdd() {
     const el = Modal.open('빠른 추가', `<form class="form">
-      <input class="qa-input" name="q" autocomplete="off" placeholder="예) 금 23:59 자료구조 과제2">
+      <input class="qa-input" name="q" autocomplete="off" placeholder="예) 금 23:59 자료구조 과제2 · 교수님께 출석 문의 메일">
       <div class="qa-preview"></div>
       <p class="hint">날짜 <b>오늘·내일·모레·월~일·다음주 금·11/3</b> · 시간 <b>23:59·오후 3시</b><br>
-      과목명이나 과제·퀴즈·시험·발표·팀플이 들어가면 <b>과제</b>로, 시간 범위(14:00-16:00)가 있으면 <b>일정</b>으로 저장돼요.</p>
+      과제·퀴즈·시험·발표·팀플이 들어가면 <b>과제</b>, 시간 범위(14:00-16:00)가 있으면 <b>일정</b>, 나머지는 <b>할 일</b>로 저장돼요.</p>
       ${foot('<button type="button" class="btn" data-detail>자세히 편집</button>', '추가')}
     </form>`);
     const form = el.querySelector('form'), input = form.q, pv = el.querySelector('.qa-preview');
@@ -294,12 +331,16 @@ const Forms = (() => {
         const t = Parser.toTask(p), d = new Date(t.due);
         info = `<b>${U.esc(t.title)}</b>${UI.courseTag(Store.course(t.courseId))}<span class="tag plain">${t.type}</span>
           <span>마감 ${U.fmtShort(d)} ${t.due.slice(11)}</span><span class="badge">${U.dday(d)}</span>`;
+      } else if (kind() === 'todo') {
+        const t = Parser.toTodo(p), d = t.due && new Date(t.due);
+        info = `<b>${U.esc(t.title)}</b>${UI.courseTag(Store.course(t.courseId))}
+          ${d ? `<span>기한 ${U.fmtShort(d)} ${t.due.slice(11)}</span><span class="badge">${U.dday(d)}</span>` : '<span class="muted">기한 없음</span>'}`;
       } else {
         const e = Parser.toEvent(p), hits = Sched.conflicts(U.parseYmd(e.date), e.start, e.end);
         info = `<b>${U.esc(e.title)}</b><span>${U.fmtShort(U.parseYmd(e.date))} ${e.start}–${e.end}</span>
           ${hits.length ? `<span class="warn-text">겹침: ${hits.map(i => U.esc(i.title)).join(', ')}</span>` : ''}`;
       }
-      pv.innerHTML = `<div class="seg">${[['task', '과제'], ['event', '일정']].map(([v, l]) => `<button type="button" data-k="${v}" class="${kind() === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+      pv.innerHTML = `<div class="seg">${[['task', '과제'], ['todo', '할 일'], ['event', '일정']].map(([v, l]) => `<button type="button" data-k="${v}" class="${kind() === v ? 'on' : ''}">${l}</button>`).join('')}</div>
         <div class="qa-info">${info}</div>`;
     };
     input.addEventListener('input', draw);
@@ -310,14 +351,18 @@ const Forms = (() => {
     form.addEventListener('submit', e => {
       e.preventDefault();
       if (!p) return;
-      if (kind() === 'task') Store.upsert('tasks', { id: U.uid(), ...Parser.toTask(p) });
+      const k = kind();
+      if (k === 'task') Store.upsert('tasks', { id: U.uid(), ...Parser.toTask(p) });
+      else if (k === 'todo') Store.upsert('tasks', { id: U.uid(), ...Parser.toTodo(p) });
       else Store.upsert('events', { id: U.uid(), ...Parser.toEvent(p) });
       Modal.close();
-      App.toast(kind() === 'task' ? '과제를 추가했어요' : '일정을 추가했어요');
+      App.toast({ task: '과제를', todo: '할 일을', event: '일정을' }[k] + ' 추가했어요');
     });
     el.querySelector('[data-detail]').addEventListener('click', () => {
-      const parsed = p || Parser.parse(input.value);
-      if ((manual || parsed.kind) === 'task') task(Parser.toTask(parsed)); else event(Parser.toEvent(parsed));
+      const parsed = p || Parser.parse(input.value), k = manual || parsed.kind;
+      if (k === 'task') task(Parser.toTask(parsed));
+      else if (k === 'todo') todo(Parser.toTodo(parsed));
+      else event(Parser.toEvent(parsed));
     });
   }
 
@@ -356,5 +401,5 @@ const Forms = (() => {
     });
   }
 
-  return { task, workPlan, course, exception, event, semester, quickAdd, freeTime };
+  return { task, todo, workPlan, course, exception, event, semester, quickAdd, freeTime };
 })();

@@ -25,6 +25,8 @@ Actions.sample = () => {
   task('자기소개 발표', en, '발표', 4, '09:00', { estimate: 1.5 });
   task('관찰 레포트', ps, '과제', 6, '23:59', { estimate: 2 });
   task('과제1 – 배열', ds, '과제', -3, '23:59', { status: 'done' });
+  task('출석 체크 안 된 부분 교수님께 연락하기', os, '할 일', 1, '18:00', { kind: 'todo', memo: '10/28 수업 출석 누락' });
+  task('학생증 재발급 신청', { id: '' }, '할 일', 0, '', { kind: 'todo', due: '' });
 
   const ws = U.startOfWeek(today);
   st.events.push(

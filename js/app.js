@@ -1,6 +1,6 @@
 // 앱 시작: 화면 전환, 클릭 처리, 단축키
 const App = (() => {
-  const ROUTES = ['today', 'calendar', 'tasks', 'courses', 'settings'];
+  const ROUTES = ['today', 'calendar', 'tasks', 'todos', 'courses', 'settings'];
   const main = document.getElementById('main');
 
   const route = () => { const r = location.hash.slice(1); return ROUTES.includes(r) ? r : 'today'; };
@@ -42,6 +42,7 @@ const App = (() => {
 
   const common = {
     'new-task': el => Forms.task({ courseId: el.dataset.cid || '' }),
+    'new-todo': el => Forms.todo({ courseId: el.dataset.cid || '' }),
     'new-event': () => Forms.event(),
     'new-course': () => Forms.course(),
     'exception': el => Forms.exception({ courseId: el.dataset.cid || '' }),
@@ -83,13 +84,21 @@ const App = (() => {
   const saveGoal = el => { clearTimeout(goalTimer); Store.setNote(el.dataset.goal, el.value); };
 
   main.addEventListener('input', e => {
-    if (e.target.dataset.filter === 'q') { TaskFilter.q = e.target.value; Views.taskList(main.querySelector('.task-groups')); }
+    if (e.target.dataset.filter === 'q') {
+      const list = main.querySelector('.task-groups');
+      ListFilter[list.dataset.kind].q = e.target.value;
+      Views.taskList(list);
+    }
     if (e.target.dataset.goal) { clearTimeout(goalTimer); goalTimer = setTimeout(() => saveGoal(e.target), 700); }
   });
   main.addEventListener('change', e => {
     if (e.target.dataset.goal) saveGoal(e.target);
     const f = e.target.dataset.filter, s = e.target.dataset.setting;
-    if (f === 'course') { TaskFilter.course = e.target.value; Views.taskList(main.querySelector('.task-groups')); }
+    if (f === 'course') {
+      const list = main.querySelector('.task-groups');
+      ListFilter[list.dataset.kind].course = e.target.value;
+      Views.taskList(list);
+    }
     if (f === 'semester') { Store.state.activeSemesterId = e.target.value; Store.commit(); }
     if (s) {
       Store.state.settings[s] = e.target.value;

@@ -24,14 +24,15 @@ Views.courses = root => {
     : '';
 
   const cards = courses.map(c => {
-    const openTasks = st.tasks.filter(t => t.courseId === c.id && t.status !== 'done').length;
+    const mine = st.tasks.filter(t => t.courseId === c.id && t.status !== 'done');
+    const openTodos = mine.filter(UI.isTodo).length, openTasks = mine.length - openTodos;
     const slots = c.slots.slice().sort((a, b) => ((a.day + 6) % 7) - ((b.day + 6) % 7))
       .map(s => `${U.DAYS[s.day]} ${s.start}–${s.end}`).join(' · ');
     return `<div class="course-card" style="--c:${c.color}">
       <div class="cc-head"><b>${U.esc(c.name)}</b><span class="small muted">${c.credits}학점</span></div>
       <div class="small muted">${[c.professor, c.room].filter(Boolean).map(U.esc).join(' · ') || '&nbsp;'}</div>
       <div class="small">${slots || '수업 시간 없음'}</div>
-      <div class="cc-foot"><span class="small muted">남은 과제 ${openTasks}개</span>
+      <div class="cc-foot"><span class="small muted">남은 과제 ${openTasks}개${openTodos ? ` · 할 일 ${openTodos}개` : ''}</span>
         <span><button class="btn small" data-act="new-task" data-cid="${c.id}">+ 과제</button>
         <button class="btn small" data-act="exception" data-cid="${c.id}">휴강·보강</button>
         <button class="btn small" data-course="${c.id}">편집</button></span></div>
