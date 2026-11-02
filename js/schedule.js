@@ -11,8 +11,14 @@ const Sched = {
     if (Sched.inSemester(date)) {
       for (const c of Store.courses()) for (const sl of c.slots) {
         if (sl.day !== wd) continue;
-        const cancelled = ex.some(e => e.type === 'cancel' && e.courseId === c.id);
-        out.push({ kind: 'class', id: c.id, title: c.name, start: sl.start, end: sl.end, room: sl.room || c.room, color: c.color, cancelled });
+        const mine = ex.filter(e => e.courseId === c.id);
+        const cancelled = mine.some(e => e.type === 'cancel');
+        // 온라인: 그날 정규 수업이 같은 시간에 온라인으로 진행 (메모에 링크 등)
+        const online = !cancelled && mine.find(e => e.type === 'online');
+        out.push({
+          kind: 'class', id: c.id, title: c.name, start: sl.start, end: sl.end, color: c.color, cancelled,
+          online: !!online, room: online ? ['온라인', online.memo].filter(Boolean).join(' · ') : sl.room || c.room,
+        });
       }
     }
     for (const e of ex) {

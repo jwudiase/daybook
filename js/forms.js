@@ -200,10 +200,10 @@ const Forms = (() => {
     if (!Store.courses().length) { alert('먼저 과목을 추가해 주세요.'); return; }
     const isNew = !input.id;
     const x = { id: U.uid(), courseId: '', type: 'cancel', date: U.ymd(new Date()), start: '09:00', end: '10:15', room: '', memo: '', ...structuredClone(input) };
-    const el = Modal.open(isNew ? '휴강 · 보강 등록' : '휴강 · 보강 편집', `<form class="form">
+    const el = Modal.open(isNew ? '휴강 · 보강 · 온라인 등록' : '휴강 · 보강 · 온라인 편집', `<form class="form">
       <div class="row">
         <label class="field"><span>과목</span><select name="courseId" required>${courseOpts(x.courseId, '선택')}</select></label>
-        <label class="field"><span>종류</span><select name="type">${opts([['cancel', '휴강'], ['makeup', '보강']], x.type)}</select></label>
+        <label class="field"><span>종류</span><select name="type">${opts([['cancel', '휴강'], ['makeup', '보강'], ['online', '온라인']], x.type)}</select></label>
         <label class="field"><span>날짜</span><input type="date" name="date" required value="${x.date}"></label>
       </div>
       <div class="row mk">
@@ -211,18 +211,32 @@ const Forms = (() => {
         <label class="field"><span>보강 끝</span><input type="time" name="end" value="${x.end}"></label>
         <label class="field"><span>강의실</span><input name="room" value="${U.esc(x.room)}"></label>
       </div>
-      <label class="field"><span>메모</span><input name="memo" value="${U.esc(x.memo)}"></label>
+      <label class="field"><span class="memo-label">메모</span><input name="memo" value="${U.esc(x.memo)}"></label>
+      <p class="hint type-hint"></p>
       ${foot(isNew ? '' : delBtn)}
     </form>`);
     const form = el.querySelector('form'), mk = el.querySelector('.mk');
     const typeSel = form.elements.type;
-    const sync = () => { mk.hidden = typeSel.value !== 'makeup'; };
+    const HINTS = {
+      cancel: '그날 이 과목 수업이 캘린더에서 취소선으로 표시되고, 빈 시간 계산에서 빠져요.',
+      makeup: '정한 시간에 보강 수업이 추가돼요.',
+      online: '그날 정규 수업이 같은 시간에 온라인으로 진행돼요. 메모에 줌 링크나 접속 방법을 적어 두면 수업 옆에 보여요.',
+    };
+    const sync = () => {
+      mk.hidden = typeSel.value !== 'makeup';
+      el.querySelector('.memo-label').textContent = typeSel.value === 'online' ? '접속 링크 · 메모' : '메모';
+      el.querySelector('.type-hint').textContent = HINTS[typeSel.value];
+    };
     typeSel.addEventListener('change', sync);
     sync();
     form.addEventListener('submit', e => {
       e.preventDefault();
       const f = Object.fromEntries(new FormData(form));
       if (f.type === 'makeup' && f.end <= f.start) { alert('보강 끝 시간이 시작 시간보다 늦어야 해요.'); return; }
+      if (f.type !== 'makeup') {
+        const c = Store.course(f.courseId), wd = U.parseYmd(f.date).getDay();
+        if (c && !c.slots.some(s => s.day === wd) && !confirm(`${U.DAYS[wd]}요일에는 '${c.name}' 수업이 없어요. 그래도 저장할까요?`)) return;
+      }
       Store.upsert('exceptions', { ...x, ...f });
       Modal.close();
     });

@@ -27,7 +27,7 @@ Views.today = root => {
     const attr = i.kind === 'class' ? `data-course="${i.id}"` : `data-event="${i.id}"`;
     return `<li class="tl-item ${st}" ${attr} style="--c:${i.color}">
       <div class="tl-time">${i.start}<span>${i.end}</span></div>
-      <div class="tl-body"><div class="tl-title">${U.esc(i.title)}${i.cancelled ? '<span class="badge">휴강</span>' : ''}${st === 'is-now' ? '<span class="badge now">진행 중</span>' : ''}</div>
+      <div class="tl-body"><div class="tl-title">${U.esc(i.title)}${i.cancelled ? '<span class="badge">휴강</span>' : ''}${i.online ? '<span class="badge online">온라인</span>' : ''}${st === 'is-now' ? '<span class="badge now">진행 중</span>' : ''}</div>
       <div class="small muted">${i.kind === 'class' ? U.esc(i.room || '수업') : '일정'}</div></div></li>`;
   }).join('')}</ul>` : UI.empty('오늘은 수업도 일정도 없어요.');
 

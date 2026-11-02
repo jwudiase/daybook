@@ -23,9 +23,10 @@ Views.calendar = root => {
         ...Sched.tasksDueOn(d).map(UI.dueChip),
         ...Sched.eventsOn(d).map(e => `<div class="m-ev" data-event="${e.id}" style="--c:${e.color}">${e.start} ${U.esc(e.title)}</div>`),
       ];
-      const cancels = Sched.classesOn(d).filter(c => c.cancelled).length;
+      const cls = Sched.classesOn(d);
+      const flag = cls.some(c => c.cancelled) ? '휴강' : cls.some(c => c.online) ? '온라인' : '';
       return `<div class="m-cell ${d.getMonth() !== a.getMonth() ? 'is-out' : ''} ${U.sameDay(d, today) ? 'is-today' : ''}" data-day="${U.ymd(d)}">
-        <div class="m-num">${d.getDate()}${cancels ? '<span class="m-flag">휴강</span>' : ''}</div>
+        <div class="m-num">${d.getDate()}${flag ? `<span class="m-flag">${cls.some(c => c.cancelled) && cls.some(c => c.online) ? '휴강·온라인' : flag}</span>` : ''}</div>
         ${chips.slice(0, 3).join('')}${chips.length > 3 ? `<div class="small muted">+${chips.length - 3}개</div>` : ''}</div>`;
     }).join('');
     body = `<div class="month"><div class="m-head">${[1, 2, 3, 4, 5, 6, 0].map(d => `<div>${U.DAYS[d]}</div>`).join('')}</div><div class="m-grid">${cells}</div></div>`;

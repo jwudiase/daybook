@@ -76,10 +76,10 @@ const UI = {
   toBlock(i) {
     return {
       start: i.start, end: i.end,
-      title: i.cancelled ? `${i.title} (휴강)` : i.title,
+      title: i.cancelled ? `${i.title} (휴강)` : i.online ? `${i.title} (온라인)` : i.title,
       sub: i.kind === 'class' ? i.room || '' : '',
       color: i.color,
-      cls: i.cancelled ? 'is-cancelled' : i.kind === 'event' ? 'is-event' : '',
+      cls: i.cancelled ? 'is-cancelled' : i.online ? 'is-online' : i.kind === 'event' ? 'is-event' : '',
       attrs: i.kind === 'class' ? `data-course="${i.id}"` : `data-event="${i.id}"`,
     };
   },

@@ -1,4 +1,4 @@
-// 과목: 학기, 주간 시간표, 과목 목록, 휴강·보강
+// 과목: 학기, 주간 시간표, 과목 목록, 휴강·보강·온라인
 Views.courses = root => {
   const st = Store.state, sem = Store.semester(), courses = Store.courses();
   const days = [1, 2, 3, 4, 5];
@@ -34,7 +34,7 @@ Views.courses = root => {
       <div class="small">${slots || '수업 시간 없음'}</div>
       <div class="cc-foot"><span class="small muted">남은 과제 ${openTasks}개${openTodos ? ` · 할 일 ${openTodos}개` : ''}</span>
         <span><button class="btn small" data-act="new-task" data-cid="${c.id}">+ 과제</button>
-        <button class="btn small" data-act="exception" data-cid="${c.id}">휴강·보강</button>
+        <button class="btn small" data-act="exception" data-cid="${c.id}">휴강·보강·온라인</button>
         <button class="btn small" data-course="${c.id}">편집</button></span></div>
     </div>`;
   }).join('');
@@ -53,13 +53,13 @@ Views.courses = root => {
       <div class="course-grid">${cards}</div>`
       : `<section class="card">${UI.empty('아직 과목이 없어요. 이번 학기 수업을 추가해 보세요.', '<button class="btn primary" data-act="new-course">+ 첫 과목 추가</button>')}</section>`}
     <section class="card">
-      <div class="card-head"><h3>휴강 · 보강</h3><button class="btn small" data-act="exception">+ 등록</button></div>
+      <div class="card-head"><h3>휴강 · 보강 · 온라인</h3><button class="btn small" data-act="exception">+ 등록</button></div>
       ${exs.length ? `<ul class="plain-list">${exs.map(x => {
         const c = Store.course(x.courseId), d = U.parseYmd(x.date);
         return `<li data-exception="${x.id}" class="${x.date < todayKey ? 'is-past' : ''}">
-          <span class="badge ${x.type === 'cancel' ? '' : 'now'}">${x.type === 'cancel' ? '휴강' : '보강'}</span>
+          <span class="badge ${{ cancel: '', makeup: 'now', online: 'online' }[x.type] ?? ''}">${{ cancel: '휴강', makeup: '보강', online: '온라인' }[x.type] || x.type}</span>
           ${UI.courseTag(c)}<span>${U.fmtShort(d)}${x.type === 'makeup' ? ` ${x.start}–${x.end}` : ''}</span>
           <span class="muted small">${U.esc(x.memo || '')}</span></li>`;
-      }).join('')}</ul>` : '<p class="muted small">등록된 휴강·보강이 없어요.</p>'}
+      }).join('')}</ul>` : '<p class="muted small">등록된 휴강·보강·온라인 수업이 없어요.</p>'}
     </section>`;
 };

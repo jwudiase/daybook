@@ -84,6 +84,8 @@ input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; m
 .badge.warm { color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
 .badge.hot, .badge.over { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
 .badge.now { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.badge.online { color: var(--work); background: color-mix(in srgb, var(--work) 14%, transparent); }
+.tg-block.is-online { background-image: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--c) 10%, transparent) 6px 12px); }
 .count { font-weight: 500; color: var(--muted); background: var(--surface-2); border-radius: 999px; padding: 0 6px; font-size: 11px; }
 
 /* 오늘 타임라인 */
